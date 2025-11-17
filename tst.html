@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة التعبيرات الرياضية</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .expression {
+            font-size: 24px;
+            color: #666;
+            margin: 15px 0;
+        }
+        .result {
+            font-size: 32px;
+            color: #2c3e50;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+        }
+        .error {
+            color: red;
+            padding: 15px;
+            background-color: #ffe6e6;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>النتيجة:</h2>
+        <div id="result-container"></div>
+    </div>
+
+    <script>
+        // الحصول على التعبير الرياضي من URL
+        function getExpressionFromURL() {
+            const queryString = window.location.search.substring(1);
+            return decodeURIComponent(queryString);
+        }
+
+        // تنظيف التعبير من أي أحرف غير مرغوب فيها (للأمان)
+        // السماح فقط بالأرقام، العمليات الرياضية الأساسية، والأقواس
+        function cleanExpression(expression) {
+            return expression.replace(/[^0-9+\-*\/\(\)\.\s]/g, '');
+        }
+
+        // تقييم التعبير الرياضي بأمان
+        function evaluateExpression(expression) {
+            try {
+                // استخدام Function constructor بدلاً من eval للأمان
+                const result = Function('"use strict"; return (' + expression + ')')();
+                return result;
+            } catch (error) {
+                throw new Error('خطأ في التعبير الرياضي');
+            }
+        }
+
+        // عرض النتيجة
+        function displayResult() {
+            const container = document.getElementById('result-container');
+            let expression = getExpressionFromURL();
+
+            // التحقق من وجود تعبير
+            if (!expression || expression.trim() === '') {
+                container.innerHTML = `
+                    <div class="error">
+                        يرجى إدخال تعبير رياضي في URL<br>
+                        مثال: tst.html?1+1
+                    </div>
+                `;
+                return;
+            }
+
+            // تنظيف التعبير
+            expression = cleanExpression(expression);
+
+            if (!expression || expression.trim() === '') {
+                container.innerHTML = `
+                    <div class="error">
+                        التعبير المدخل غير صحيح
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                // تقييم التعبير
+                const result = evaluateExpression(expression);
+                
+                // عرض النتيجة
+                container.innerHTML = `
+                    <div class="expression">
+                        <strong>التعبير:</strong> ${expression}
+                    </div>
+                    <div class="result">
+                        <strong>النتيجة:</strong> ${result}
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="error">
+                        خطأ في التعبير الرياضي: ${expression}<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // تشغيل الكود عند تحميل الصفحة
+        window.addEventListener('DOMContentLoaded', displayResult);
+    </script>
+</body>
+</html>
