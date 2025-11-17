@@ -3,139 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حاسبة التعبيرات الرياضية</title>
+    <title>عارض بيانات API</title>
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff; /* خلفية بيضاء */
+        }
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
+            font-family: Menlo, Monaco, 'Courier New', monospace; /* خط للبرمجة (API) */
+        }
+        /* <pre> هو العنصر الذي يعرض الكود المنسق */
+        pre {
+            white-space: pre-wrap;       /* لضمان التفاف السطور الطويلة */
+            word-wrap: break-word;
             padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h2 {
-            color: #333;
-            margin-top: 0;
-        }
-        .expression {
-            font-size: 24px;
-            color: #666;
-            margin: 15px 0;
-        }
-        .result {
-            font-size: 32px;
-            color: #2c3e50;
-            font-weight: bold;
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #ecf0f1;
-            border-radius: 5px;
-        }
-        .error {
-            color: red;
-            padding: 15px;
-            background-color: #ffe6e6;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        .info {
-            color: #7f8c8d;
-            font-size: 14px;
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
+            margin: 0; /* إزالة أي هوامش افتراضية */
+            background-color: #ffffff; /* خلفية بيضاء */
+            
+            /* JSON يجب أن يكون دائمًا من اليسار لليمين */
+            direction: ltr; 
+            text-align: left;
+            
+            /* لملء الشاشة */
+            min-height: 100vh;
+            box-sizing: border-box; /* لحساب الـ padding ضمن الارتفاع */
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>النتيجة:</h2>
-        <div id="result-container"></div>
-    </div>
+
+    <!-- هذا العنصر سيعرض الـ JSON ويملأ الشاشة -->
+    <pre id="jsonData"></pre>
+    
+    <!-- تم حذف عنصر الخطأ -->
 
     <script>
-        // الحصول على التعبير الرياضي من URL
-        function getExpressionFromURL() {
-            const queryString = window.location.search.substring(1);
-            return decodeURIComponent(queryString);
+        // تحديد العناصر في الصفحة
+        const jsonDataDisplay = document.getElementById('jsonData');
+
+        // دالة لاستخراج معاملات URL
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
         }
 
-        // تنظيف التعبير من أي أحرف غير مرغوب فيها (للأمان)
-        // السماح فقط بالأرقام، العمليات الرياضية الأساسية، والأقواس
-        function cleanExpression(expression) {
-            return expression.replace(/[^0-9+\-*\/\(\)\.\s]/g, '');
-        }
-
-        // تقييم التعبير الرياضي بأمان
-        function evaluateExpression(expression) {
-            try {
-                // استخدام Function constructor بدلاً من eval للأمان
-                const result = Function('"use strict"; return (' + expression + ')')();
-                return result;
-            } catch (error) {
-                throw new Error('خطأ في التعبير الرياضي');
-            }
-        }
-
-        // عرض النتيجة
-        function displayResult() {
-            const container = document.getElementById('result-container');
-            let expression = getExpressionFromURL();
-
-            // التحقق من وجود تعبير
-            if (!expression || expression.trim() === '') {
-                container.innerHTML = `
-                    <div class="error">
-                        يرجى إدخال تعبير رياضي في URL<br>
-                        مثال: tst.html?1+1
-                    </div>
-                `;
+        // تعريف الدالة التي تجلب البيانات
+        async function fetchData() {
+            // استخراج معامل code من URL
+            const codeParam = getUrlParameter('code');
+            
+            // إذا لم يتم توفير معامل code، عرض رسالة خطأ
+            if (!codeParam) {
+                const errorJson = {
+                    error: "#"
+                };
+                jsonDataDisplay.textContent = JSON.stringify(errorJson, null, 2);
+                jsonDataDisplay.style.color = '#d9534f';
                 return;
             }
-
-            // تنظيف التعبير
-            expression = cleanExpression(expression);
-
-            if (!expression || expression.trim() === '') {
-                container.innerHTML = `
-                    <div class="error">
-                        التعبير المدخل غير صحيح
-                    </div>
-                `;
-                return;
-            }
+            
+            // إعداد خيارات الـ fetch
+            const options = {
+                method: 'GET',
+                headers: {
+                    'xc-token': 'gEtQ_h1hRUZSB3T5CpPsuFG61KeaH9l97Jdrf7ZG'
+                }
+            };
+            const url = 'https://app.nocodb.com/api/v2/tables/mmvil42vvvqplun/records?offset=0&limit=25&where=&viewId=vwnp9inctxwmyr78';
 
             try {
-                // تقييم التعبير
-                const result = evaluateExpression(expression);
+                // تنفيذ طلب الـ fetch
+                const response = await fetch(url, options);
+
+                // التحقق من نجاح الرد (مثل 200 OK)
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! Status: ${response.status} - ${errorData.message || 'خطأ غير معروف'}`);
+                }
+
+                // تحويل الرد إلى JSON
+                const data = await response.json();
+
+                // طباعة النتيجة في الـ Console (للتصحيح)
+                console.log('--- بيانات NocoDB ---');
+                console.log(data);
+                console.log('---------------------');
+
+                // البحث عن السجل الذي يحتوي على code المطابق
+                if (data && Array.isArray(data.list)) {
+                    // البحث عن السجل الذي يحتوي على code المطلوب
+                    const foundRecord = data.list.find(record => record.code == codeParam);
+                    
+                    let result;
+                    
+                    if (foundRecord) {
+                        // إذا وجد السجل، تحقق من قيمة ok
+                        // إذا ok = 0 → true = 0
+                        // إذا ok = 1 → false = 1
+                        if (foundRecord.ok == 0) {
+                            result = { result: 0 };
+                        } else if (foundRecord.ok == 1) {
+                            result = { result: 1 };
+                        } else {
+                            // حالة غير متوقعة
+                            result = { error: "#" };
+                        }
+                    } else {
+                        // إذا لم يتم العثور على السجل
+                        result = { error: "#" };
+                    }
+                    
+                    // عرض النتيجة كـ JSON
+                    jsonDataDisplay.textContent = JSON.stringify(result, null, 2);
+                    
+                    // تلوين الخطأ باللون الأحمر إذا كان هناك خطأ
+                    if (result.error) {
+                        jsonDataDisplay.style.color = '#d9534f';
+                    } else {
+                        jsonDataDisplay.style.color = '#000000'; // لون أسود للنتائج العادية
+                    }
+
+                } else {
+                    // معالجة الحالة التي لا تكون فيها البيانات بالتنسيق المتوقع
+                    throw new Error("البيانات المستلمة ليست بالتنسيق المتوقع. لم يتم العثور على 'data.list'.");
+                }
+
+            } catch (err) {
+                // معالجة أي أخطاء تحدث
+                console.error('Fetch Error:', err);
                 
-                // عرض النتيجة
-                container.innerHTML = `
-                    <div class="expression">
-                        <strong>التعبير:</strong> ${expression}
-                    </div>
-                    <div class="result">
-                        <strong>النتيجة:</strong> ${result}
-                    </div>
-                `;
-            } catch (error) {
-                container.innerHTML = `
-                    <div class="error">
-                        خطأ في التعبير الرياضي: ${expression}<br>
-                        ${error.message}
-                    </div>
-                `;
+                // عرض الخطأ كـ JSON
+                const errorJson = {
+                    error: "#"
+                };
+                jsonDataDisplay.textContent = JSON.stringify(errorJson, null, 2);
+                jsonDataDisplay.style.color = '#d9534f'; // تلوين الخطأ باللون الأحمر
             }
         }
 
-        // تشغيل الكود عند تحميل الصفحة
-        window.addEventListener('DOMContentLoaded', displayResult);
+        // --- النقطة الأساسية ---
+        // استدعاء الدالة تلقائيًا بمجرد أن يصبح الـ HTML جاهزًا
+        document.addEventListener('DOMContentLoaded', fetchData);
     </script>
 </body>
 </html>
