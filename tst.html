@@ -43,23 +43,21 @@
         // تحديد العناصر في الصفحة
         const jsonDataDisplay = document.getElementById('jsonData');
 
-        // دالة لاستخراج معاملات URL
-        function getUrlParameter(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
+        // دالة لاستخراج الكود مباشرة من URL (api.html?{code})
+        function getCodeFromUrl() {
+            const search = window.location.search;
+            // إزالة علامة ? من البداية
+            return search.substring(1);
         }
 
         // تعريف الدالة التي تجلب البيانات
         async function fetchData() {
-            // استخراج معامل code من URL
-            const codeParam = getUrlParameter('code');
+            // استخراج الكود مباشرة من URL (api.html?{code})
+            const codeParam = getCodeFromUrl();
             
             // إذا لم يتم توفير معامل code، عرض رسالة خطأ
             if (!codeParam) {
-                const errorJson = {
-                    error: "#"
-                };
-                jsonDataDisplay.textContent = JSON.stringify(errorJson, null, 2);
+                jsonDataDisplay.textContent = "err"; // err
                 jsonDataDisplay.style.color = '#d9534f';
                 return;
             }
@@ -100,26 +98,26 @@
                     
                     if (foundRecord) {
                         // إذا وجد السجل، تحقق من قيمة ok
-                        // إذا ok = 0 → true = 0
-                        // إذا ok = 1 → false = 1
+                        // 0 = true (إذا ok = 0 → يعرض true)
+                        // 1 = false (إذا ok = 1 → يعرض false)
                         if (foundRecord.ok == 0) {
-                            result = { result: 0 };
+                            result = "true"; // 0 = true
                         } else if (foundRecord.ok == 1) {
-                            result = { result: 1 };
+                            result = "false"; // 1 = false
                         } else {
                             // حالة غير متوقعة
-                            result = { error: "#" };
+                            result = "err"; // err
                         }
                     } else {
                         // إذا لم يتم العثور على السجل
-                        result = { error: "#" };
+                        result = "err"; // err
                     }
                     
-                    // عرض النتيجة كـ JSON
-                    jsonDataDisplay.textContent = JSON.stringify(result, null, 2);
+                    // عرض النتيجة فقط (بدون JSON)
+                    jsonDataDisplay.textContent = result;
                     
                     // تلوين الخطأ باللون الأحمر إذا كان هناك خطأ
-                    if (result.error) {
+                    if (result == "err") {
                         jsonDataDisplay.style.color = '#d9534f';
                     } else {
                         jsonDataDisplay.style.color = '#000000'; // لون أسود للنتائج العادية
@@ -134,11 +132,8 @@
                 // معالجة أي أخطاء تحدث
                 console.error('Fetch Error:', err);
                 
-                // عرض الخطأ كـ JSON
-                const errorJson = {
-                    error: "#"
-                };
-                jsonDataDisplay.textContent = JSON.stringify(errorJson, null, 2);
+                // عرض الخطأ فقط
+                jsonDataDisplay.textContent = "err"; // err
                 jsonDataDisplay.style.color = '#d9534f'; // تلوين الخطأ باللون الأحمر
             }
         }
